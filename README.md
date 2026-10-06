@@ -1,0 +1,2 @@
+# amaranth-scanner-oy
+scanner
