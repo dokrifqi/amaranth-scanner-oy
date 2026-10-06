@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gambar ke Word</title>
+<meta name="theme-color" content="#F1F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12142A" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gambar ke Word">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="vendor/docx.umd.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<style>
+@font-face{font-family:"Bricolage Grotesque";font-weight:600;font-style:normal;font-display:swap;src:url(fonts/bricolage-grotesque-latin-600-normal.woff2) format("woff2");}
+@font-face{font-family:"Bricolage Grotesque";font-weight:700;font-style:normal;font-display:swap;src:url(fonts/bricolage-grotesque-latin-700-normal.woff2) format("woff2");}
+@font-face{font-family:"Public Sans";font-weight:400;font-style:normal;font-display:swap;src:url(fonts/public-sans-latin-400-normal.woff2) format("woff2");}
+@font-face{font-family:"Public Sans";font-weight:500;font-style:normal;font-display:swap;src:url(fonts/public-sans-latin-500-normal.woff2) format("woff2");}
+@font-face{font-family:"Public Sans";font-weight:600;font-style:normal;font-display:swap;src:url(fonts/public-sans-latin-600-normal.woff2) format("woff2");}
+:root{
+  --bg:#F1F2F7; --surface:#FFFFFF; --ink:#1A1D3A; --muted:#5B6080; --line:#D3D7E8;
+  --accent:#2B3A8C; --accent-ink:#FFFFFF; --danger:#B3312B; --scrim:rgba(20,22,48,.74);
+  --paper:#FFFFFF; --paper-line:#C9CEE3; --paper-fill:#F6F7FB;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Public Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12142A; --surface:#1C1F3E; --ink:#ECEEFA; --muted:#A3A8CC; --line:#363A66;
+    --accent:#8C9CFF; --accent-ink:#10122A; --danger:#FF8A80; --scrim:rgba(8,9,24,.8);
+    --paper-fill:#EEF0F8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12142A; --surface:#1C1F3E; --ink:#ECEEFA; --muted:#A3A8CC; --line:#363A66;
+  --accent:#8C9CFF; --accent-ink:#10122A; --danger:#FF8A80; --scrim:rgba(8,9,24,.8);
+  --paper-fill:#EEF0F8;
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:border-box;}
+body{
+  margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:var(--body);font-size:16px;line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:680px;margin:0 auto;padding:28px 18px 132px;}
+h1{
+  font-family:var(--display);font-weight:700;font-size:clamp(34px,9vw,48px);
+  line-height:1.02;letter-spacing:-.025em;margin:0 0 10px;
+}
+.lede{margin:0 0 26px;color:var(--muted);max-width:44ch;}
+button{font:inherit;color:inherit;cursor:pointer;}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}
+
+.pages{display:flex;flex-direction:column;gap:22px;}
+.page-head{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 8px;font-size:14px;color:var(--muted);}
+.page-head strong{color:var(--ink);font-weight:600;}
+.sheet{
+  width:100%;background:var(--paper);border:1px solid var(--paper-line);border-radius:3px;
+  padding:5.5%;display:flex;flex-direction:column;aspect-ratio:210/297;
+}
+.grid{
+  flex:1 1 0;min-height:0;display:grid;gap:1.6%;
+  grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));
+  grid-template-rows:repeat(var(--rows,2),minmax(0,1fr));
+}
+.note{flex:0 0 0;display:flex;flex-direction:column;justify-content:flex-start;gap:1px;padding-bottom:0;overflow:hidden;}
+.note i{display:block;height:2px;width:42%;background:var(--paper-line);border-radius:1px;margin-top:3px;}
+.note i:nth-child(2){width:30%;}
+.note i:nth-child(3){width:36%;}
+.note-tag{font-size:10.5px;color:#6A7094;line-height:1;margin-top:1px;}
+.sheet.land{aspect-ratio:297/210;}
+.slot{
+  position:relative;min-width:0;min-height:0;border-radius:2px;overflow:hidden;
+  background:var(--paper-fill);display:flex;align-items:center;justify-content:center;
+}
+.slot img{width:100%;height:100%;object-fit:contain;display:block;}
+.slot.empty{
+  background:transparent;border:1.5px dashed var(--paper-line);color:#6A7094;
+  cursor:pointer;padding:0;
+}
+.slot.empty:hover{background:var(--paper-fill);}
+.slot.empty svg{width:26px;height:26px;}
+.ctl{
+  position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;
+  background:var(--scrim);padding:2px;
+}
+.ctl button{
+  flex:1 1 0;min-width:0;width:auto;height:32px;border:0;background:transparent;color:#fff;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;padding:0;
+}
+.ctl button:hover:not(:disabled){background:rgba(255,255,255,.18);}
+.ctl button:disabled{opacity:.3;cursor:default;}
+.ctl button:focus-visible{outline-color:#fff;outline-offset:-2px;}
+.ctl svg{width:17px;height:17px;}
+.sheet.narrow .numtag{top:3px;left:3px;}
+.hint{margin:8px 0 0;color:var(--muted);font-size:13.5px;line-height:1.4;}
+.numtag{
+  position:absolute;top:4px;left:4px;background:var(--scrim);color:#fff;font-size:12px;font-weight:600;
+  min-width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:0 6px;
+}
+
+.idcard{margin:0 0 30px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;}
+.idcard h2{font-family:var(--display);font-size:20px;margin:0 0 14px;letter-spacing:-.01em;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;}
+.f{min-width:0;}
+.f.full{grid-column:1/-1;}
+.f label{display:block;font-size:14px;font-weight:600;margin-bottom:5px;}
+.f input,.f select{
+  width:100%;min-height:48px;padding:10px 12px;font:inherit;font-size:16px;color:var(--ink);
+  background:var(--bg);border:1.5px solid var(--line);border-radius:10px;
+}
+.f input:focus,.f select:focus{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+.id-line{font-size:6.5px;line-height:1.25;color:#2A2E4D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.id-line b{font-weight:700;}
+@media (max-width:360px){.fgrid{grid-template-columns:1fr;}}
+.install{margin-top:22px;display:flex;flex-direction:column;align-items:flex-start;}
+.src-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 20px;}
+.btn-src{min-height:52px;border-radius:12px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);font-weight:600;padding:0 10px;}
+.btn-src.primary{background:var(--accent);color:var(--accent-ink);}
+.add-row{gap:10px;flex-wrap:wrap;}
+.cam{position:fixed;inset:0;z-index:30;background:#000;display:flex;flex-direction:column;color:#fff;}
+.cam[hidden]{display:none;}
+.cam video{flex:1 1 0;min-height:0;width:100%;object-fit:contain;background:#000;}
+.cam-top{position:absolute;left:0;right:0;top:0;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;display:flex;flex-direction:column;gap:2px;background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,0));pointer-events:none;}
+.cam-top #camCount{font-family:var(--display);font-weight:700;font-size:20px;}
+.cam-tip{font-size:13.5px;opacity:.85;}
+.cam-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px calc(18px + env(safe-area-inset-bottom,0px));background:#000;}
+.cam-side{background:transparent;border:0;color:#fff;font-weight:600;font-size:16px;min-width:96px;min-height:52px;border-radius:12px;}
+.cam-side:first-child{text-align:left;}
+.cam-side:last-child{text-align:right;}
+.cam-shot{width:74px;height:74px;border-radius:50%;background:#fff;border:5px solid #000;box-shadow:0 0 0 4px #fff;padding:0;}
+.cam-shot:active{background:#d9dcec;}
+.cam-shot:disabled{opacity:.5;}
+.cam :focus-visible{outline-color:#fff;}
+.cam-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;}
+@media (prefers-reduced-motion:no-preference){.cam-flash.on{opacity:.55;transition:opacity .05s;}.cam-flash{transition:opacity .25s;}}
+.add-row{display:flex;justify-content:center;margin-top:18px;}
+.btn-quiet{
+  background:transparent;border:1.5px solid var(--line);border-radius:10px;padding:11px 18px;
+  min-height:46px;font-weight:600;
+}
+.btn-quiet:hover{border-color:var(--accent);}
+.link-btn{background:none;border:0;padding:8px 4px;color:var(--muted);text-decoration:underline;min-height:40px;}
+
+.settings{
+  margin-top:34px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;
+}
+.settings h2{font-family:var(--display);font-size:20px;margin:0 0 14px;letter-spacing:-.01em;}
+.field{margin-bottom:16px;}
+.field:last-child{margin-bottom:0;}
+.field>.lbl{display:block;font-weight:600;margin-bottom:8px;font-size:15px;}
+.seg{display:grid;grid-template-columns:repeat(var(--n,2),1fr);border:1.5px solid var(--line);border-radius:10px;overflow:hidden;}
+.seg label{position:relative;}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;}
+.seg span{display:block;text-align:center;padding:11px 4px;min-height:46px;font-weight:500;}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink);font-weight:600;}
+.seg input:focus-visible+span{outline:3px solid var(--accent);outline-offset:-3px;}
+.check{display:flex;gap:12px;align-items:flex-start;padding:6px 0;min-height:44px;cursor:pointer;}
+.check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent);flex:none;}
+.check small{display:block;color:var(--muted);font-size:13.5px;line-height:1.35;}
+
+.bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);
+  border-top:1px solid var(--line);
+  padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));
+}
+.upd{max-width:680px;margin:0 auto 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;line-height:1.35;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 8px 8px 12px;}
+.upd .link-btn{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap;padding:8px 10px;}
+.bar-in{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:14px;}
+.count{flex:1;min-width:0;}
+.count b{font-family:var(--display);font-size:20px;letter-spacing:-.01em;display:block;line-height:1.15;}
+.status{font-size:13.5px;color:var(--muted);line-height:1.3;margin-top:2px;}
+.status.err{color:var(--danger);}
+.go{
+  background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;
+  padding:0 22px;min-height:52px;font-weight:600;font-size:16px;white-space:nowrap;
+}
+.go:disabled{opacity:.45;cursor:default;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+@media (prefers-reduced-motion:no-preference){
+  .go:not(:disabled):active{transform:translateY(1px);}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Gambar ke Word</h1>
+  <p class="lede">Isi nama pasien, ambil foto dengan kamera atau pilih dari galeri, lalu simpan sebagai Word atau PDF. Nama tercetak di kiri atas tiap halaman, jumlah foto per halaman bisa diatur sendiri.</p>
+
+  <section class="idcard" aria-labelledby="idTitle">
+    <h2 id="idTitle">Nama pasien</h2>
+    <div class="fgrid">
+      <div class="f full"><label for="fNama">Nama</label><input id="fNama" type="text" maxlength="60" autocomplete="off" autocapitalize="words" placeholder="mis. By. Ny. Siti"></div>
+    </div>
+    <label class="check"><input type="checkbox" id="optRepeat" checked><span>Cetak di setiap halaman<small>Jika dimatikan, nama hanya muncul di halaman pertama.</small></span></label>
+    <p class="hint">Hanya diproses di perangkat ini. Nama tidak diunggah dan tidak disimpan setelah halaman ditutup.</p>
+  </section>
+
+  <div class="src-row">
+    <button type="button" class="btn-src" id="srcGallery">Pilih dari galeri</button>
+    <button type="button" class="btn-src primary" id="srcCamera">Ambil dari kamera</button>
+  </div>
+
+  <div id="pages" class="pages"></div>
+  <div id="addRow" class="add-row" hidden>
+    <button type="button" class="btn-quiet" id="addGallery">Tambah dari galeri</button>
+    <button type="button" class="btn-quiet" id="addCamera">Tambah dari kamera</button>
+  </div>
+
+  <section class="settings" aria-labelledby="sTitle">
+    <h2 id="sTitle">Pengaturan halaman</h2>
+    <div class="field">
+      <span class="lbl" id="fmtLbl">Hasil akhir</span>
+      <div class="seg" style="--n:2" role="radiogroup" aria-labelledby="fmtLbl">
+        <label><input type="radio" name="fmt" value="word" checked><span>Word (.docx)</span></label>
+        <label><input type="radio" name="fmt" value="pdf"><span>PDF</span></label>
+      </div>
+      <p class="hint" id="fmtHint">Word bisa diedit lagi, termasuk mengetik di ruang tulis.</p>
+    </div>
+    <div class="field">
+      <span class="lbl" id="colLbl">Kolom (ke samping)</span>
+      <div class="seg" style="--n:4" role="radiogroup" aria-labelledby="colLbl">
+        <label><input type="radio" name="col" value="1"><span>1</span></label>
+        <label><input type="radio" name="col" value="2" checked><span>2</span></label>
+        <label><input type="radio" name="col" value="3"><span>3</span></label>
+        <label><input type="radio" name="col" value="4"><span>4</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lbl" id="rowLbl">Baris (ke bawah)</span>
+      <div class="seg" style="--n:5" role="radiogroup" aria-labelledby="rowLbl">
+        <label><input type="radio" name="row" value="1"><span>1</span></label>
+        <label><input type="radio" name="row" value="2" checked><span>2</span></label>
+        <label><input type="radio" name="row" value="3"><span>3</span></label>
+        <label><input type="radio" name="row" value="4"><span>4</span></label>
+        <label><input type="radio" name="row" value="5"><span>5</span></label>
+      </div>
+      <p class="hint" id="ppHint">Susunan 2 × 2 = 4 foto per halaman.</p>
+    </div>
+    <div class="field">
+      <span class="lbl" id="tlLbl">Ruang tulis di kiri atas</span>
+      <div class="seg" style="--n:4" role="radiogroup" aria-labelledby="tlLbl">
+        <label><input type="radio" name="tl" value="0"><span>Tanpa</span></label>
+        <label><input type="radio" name="tl" value="1"><span>1 baris</span></label>
+        <label><input type="radio" name="tl" value="2" checked><span>2 baris</span></label>
+        <label><input type="radio" name="tl" value="3"><span>3 baris</span></label>
+      </div>
+      <p class="hint">Di Word, ruang ini kosong dan tinggal diketik. Ketik tidak lebih dari jumlah baris yang dipilih agar susunan foto tidak bergeser.</p>
+    </div>
+    <div class="field">
+      <span class="lbl" id="oriLbl">Arah kertas</span>
+      <div class="seg" style="--n:2" role="radiogroup" aria-labelledby="oriLbl">
+        <label><input type="radio" name="ori" value="p" checked><span>Tegak</span></label>
+        <label><input type="radio" name="ori" value="l"><span>Mendatar</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="check"><input type="checkbox" id="optNum"><span>Beri nomor di bawah tiap foto<small>Nomor urut mengikuti susunan di atas.</small></span></label>
+      <label class="check"><input type="checkbox" id="optBorder"><span>Beri garis di sekeliling foto<small>Garis tipis pemisah antar foto.</small></span></label>
+    </div>
+    <div class="field">
+      <button type="button" class="link-btn" id="clearAll" hidden>Hapus semua foto</button>
+    </div>
+  </section>
+  <div class="install" id="installBox" hidden>
+    <button type="button" class="btn-quiet" id="installBtn">Pasang aplikasi di perangkat ini</button>
+    <p class="hint" id="iosHint" hidden>Di iPhone atau iPad: ketuk tombol Bagikan di Safari, lalu pilih Tambah ke Layar Utama.</p>
+  </div>
+</main>
+
+<div class="bar">
+  <div class="upd" id="updateBar" hidden>
+    <span>Versi baru tersedia. Memuat ulang akan mengosongkan foto yang sudah dipilih.</span>
+    <button type="button" class="link-btn" id="updateBtn">Muat ulang</button>
+  </div>
+  <div class="bar-in">
+    <div class="count">
+      <b id="countTxt">Belum ada foto</b>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </div>
+    <button type="button" class="go" id="go" disabled>Simpan ke Word</button>
+  </div>
+</div>
+
+<input type="file" id="picker" accept="image/*" multiple class="sr" tabindex="-1" aria-hidden="true">
+<input type="file" id="pickerCam" accept="image/*" capture="environment" class="sr" tabindex="-1" aria-hidden="true">
+
+<div class="cam" id="cam" hidden role="dialog" aria-modal="true" aria-label="Kamera">
+  <video id="camVideo" playsinline muted autoplay></video>
+  <div class="cam-flash" id="camFlash"></div>
+  <div class="cam-top"><span id="camCount">0 foto</span><span class="cam-tip">Arahkan ke halaman, lalu tekan tombol bulat</span></div>
+  <div class="cam-bar">
+    <button type="button" id="camDone" class="cam-side">Selesai</button>
+    <button type="button" id="camShot" class="cam-shot" aria-label="Ambil foto"></button>
+    <button type="button" id="camFlip" class="cam-side">Balik kamera</button>
+  </div>
+</div>
+
+
+<script>
+/*BUILDER_START*/
+const LINE_TW = 340; // tinggi satu baris tulisan (twip), sekitar 0,6 cm
+
+// Susun identitas pasien menjadi baris-baris [{label, value}]. Kolom kosong dilewati.
+function identityLines(info) {
+  const v = (x) => String(x == null ? "" : x).replace(/\s+/g, " ").trim();
+  const nama = v(info.nama);
+  return nama ? [[{ label: "Nama", value: nama }]] : [];
+}
+
+function buildDoc(docx, items, opts) {
+  const { Document, Paragraph, Table, TableRow, TableCell, ImageRun, WidthType, HeightRule,
+    AlignmentType, VerticalAlign, BorderStyle, TextRun, PageOrientation, TableLayoutType,
+    LineRuleType } = docx;
+
+  const landscape = !!opts.landscape;
+  const noteLines = Math.max(0, Math.min(3, opts.noteLines | 0));
+  const idLines = identityLines(opts.info || {});
+  const repeatId = opts.repeatIdentity !== false;
+  const cols = Math.max(1, Math.min(4, (opts.cols | 0) || 2));
+  const rows = Math.max(1, Math.min(5, (opts.rows | 0) || 2));
+  const perPage = cols * rows;
+
+  const PW = 11906, PH = 16838, M = 720;               // A4 dalam twip, margin 1,27 cm
+  const pageW = landscape ? PH : PW;
+  const pageH = landscape ? PW : PH;
+  const contentW = pageW - 2 * M;
+  const contentH = pageH - 2 * M;
+  const colW = Math.floor(contentW / cols);
+  const pad = 80;
+  const capH = opts.number ? 24 : 0;                   // px untuk nomor di bawah foto
+  const boxW = Math.floor((colW - 2 * pad) / 15) - 2;  // 1 px = 15 twip
+
+  const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+  const line = { style: BorderStyle.SINGLE, size: 4, color: "B5BAD0" };
+  const b = opts.border ? line : none;
+  const borders = { top: b, bottom: b, left: b, right: b };
+
+  function cell(item, number, boxH) {
+    const kids = [];
+    if (item) {
+      const s = Math.min(boxW / item.w, boxH / item.h);
+      const w = Math.max(1, Math.round(item.w * s));
+      const h = Math.max(1, Math.round(item.h * s));
+      kids.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 0, after: 0 },
+        children: [new ImageRun({ data: item.data, transformation: { width: w, height: h } })],
+      }));
+      if (opts.number) {
+        kids.push(new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 40, after: 0 },
+          children: [new TextRun({ text: String(number), size: 18, color: "555B7A" })],
+        }));
+      }
+    } else {
+      kids.push(new Paragraph({ spacing: { before: 0, after: 0 }, children: [] }));
+    }
+    return new TableCell({
+      width: { size: colW, type: WidthType.DXA },
+      verticalAlign: VerticalAlign.CENTER,
+      borders,
+      margins: { top: pad, bottom: pad, left: pad, right: pad },
+      children: kids,
+    });
+  }
+
+  function identityParagraph(fields, breakBefore) {
+    const runs = [];
+    fields.forEach((f, i) => {
+      if (i > 0) runs.push(new TextRun({ text: "    |    ", size: 20, color: "8A8FA8" }));
+      runs.push(new TextRun({ text: f.label + ": ", bold: true, size: 20 }));
+      runs.push(new TextRun({ text: f.value, size: 20 }));
+    });
+    return new Paragraph({
+      pageBreakBefore: breakBefore,
+      alignment: AlignmentType.LEFT,
+      spacing: { before: 0, after: 0, line: LINE_TW, lineRule: LineRuleType.EXACT },
+      children: runs,
+    });
+  }
+
+  const children = [];
+  const pages = Math.ceil(items.length / perPage);
+  for (let p = 0; p < pages; p++) {
+    const chunk = items.slice(p * perPage, (p + 1) * perPage);
+    const idHere = (p === 0 || repeatId) ? idLines : [];
+    const top = idHere.length + noteLines;
+    const rowH = Math.floor((contentH - 320 - top * LINE_TW) / rows);
+    const boxH = Math.floor((rowH - 2 * pad) / 15) - 8 - capH;
+
+    // Identitas pasien lalu ruang tulis kosong, semuanya rata kiri di atas foto.
+    // Tanpa keduanya, paragraf setipis 1 pt tetap dipakai sebagai pemisah halaman.
+    let first = true;
+    idHere.forEach((fields) => {
+      children.push(identityParagraph(fields, p > 0 && first));
+      first = false;
+    });
+    for (let k = 0; k < noteLines; k++) {
+      children.push(new Paragraph({
+        pageBreakBefore: p > 0 && first,
+        alignment: AlignmentType.LEFT,
+        spacing: { before: 0, after: 0, line: LINE_TW, lineRule: LineRuleType.EXACT },
+        children: [new TextRun({ text: "", size: 24 })],
+      }));
+      first = false;
+    }
+    if (first) {
+      children.push(new Paragraph({
+        pageBreakBefore: p > 0,
+        spacing: { before: 0, after: 0, line: 20, lineRule: LineRuleType.EXACT },
+        children: [],
+      }));
+    }
+
+    const trs = [];
+    for (let r = 0; r < rows; r++) {
+      const cells = [];
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        cells.push(cell(chunk[i], p * perPage + i + 1, boxH));
+      }
+      trs.push(new TableRow({
+        height: { value: rowH, rule: HeightRule.EXACT },
+        cantSplit: true,
+        children: cells,
+      }));
+    }
+    children.push(new Table({
+      width: { size: colW * cols, type: WidthType.DXA },
+      columnWidths: Array(cols).fill(colW),
+      layout: TableLayoutType.FIXED,
+      borders: { top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none },
+      rows: trs,
+    }));
+  }
+  children.push(new Paragraph({
+    spacing: { before: 0, after: 0, line: 20, lineRule: LineRuleType.EXACT },
+    children: [],
+  }));
+
+  return new Document({
+    creator: "Gambar ke Word",
+    title: "Kumpulan gambar",
+    sections: [{
+      properties: {
+        page: {
+          size: { width: PW, height: PH, orientation: landscape ? PageOrientation.LANDSCAPE : PageOrientation.PORTRAIT },
+          margin: { top: M, right: M, bottom: M, left: M, header: 0, footer: 0 },
+        },
+      },
+      children,
+    }],
+  });
+}
+
+// Hasil PDF: tata letak yang sama dengan Word (A4, margin 1,27 cm), digambar langsung dengan jsPDF.
+function buildPdf(JsPDF, items, opts) {
+  const landscape = !!opts.landscape;
+  const noteLines = Math.max(0, Math.min(3, opts.noteLines | 0));
+  const idLines = identityLines(opts.info || {});
+  const repeatId = opts.repeatIdentity !== false;
+  const cols = Math.max(1, Math.min(4, (opts.cols | 0) || 2));
+  const rows = Math.max(1, Math.min(5, (opts.rows | 0) || 2));
+  const perPage = cols * rows;
+  const doc = new JsPDF({ orientation: landscape ? "landscape" : "portrait", unit: "pt", format: "a4", compress: true });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 36, lineH = LINE_TW / 20, pad = 4, capH = opts.number ? 18 : 0;
+  const contentW = pageW - 2 * M, contentH = pageH - 2 * M;
+  const colW = contentW / cols;
+  const safe = (t) => String(t).replace(/[^\x20-\x7E\xA0-\xFF]/g, "?");   // huruf standar PDF (Latin-1)
+  const pages = Math.ceil(items.length / perPage);
+
+  for (let p = 0; p < pages; p++) {
+    if (p > 0) doc.addPage("a4", landscape ? "landscape" : "portrait");
+    const chunk = items.slice(p * perPage, (p + 1) * perPage);
+    const idHere = (p === 0 || repeatId) ? idLines : [];
+    const top = idHere.length + noteLines;
+    let y = M;
+
+    idHere.forEach((fields) => {
+      let x = M;
+      const base = y + lineH * 0.72;
+      fields.forEach((f, i) => {
+        doc.setFontSize(10);
+        if (i > 0) {
+          doc.setFont("helvetica", "normal"); doc.setTextColor(138, 143, 168);
+          doc.text("   |   ", x, base); x += doc.getTextWidth("   |   ");
+        }
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "bold");
+        const lab = safe(f.label) + ": ";
+        doc.text(lab, x, base); x += doc.getTextWidth(lab);
+        doc.setFont("helvetica", "normal");
+        const val = safe(f.value);
+        doc.text(val, x, base); x += doc.getTextWidth(val);
+      });
+      y += lineH;
+    });
+    y += noteLines * lineH;
+
+    const rowH = (contentH - 16 - top * lineH) / rows;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        const x0 = M + c * colW, y0 = y + r * rowH;
+        if (opts.border) {
+          doc.setDrawColor(181, 186, 208); doc.setLineWidth(0.5);
+          doc.rect(x0, y0, colW, rowH);
+        }
+        const it = chunk[i];
+        if (!it) continue;
+        const boxW = colW - 2 * pad, boxH = rowH - 2 * pad - capH;
+        const s = Math.min(boxW / it.w, boxH / it.h);
+        const w = it.w * s, h = it.h * s;
+        const yImg = y0 + (rowH - (h + capH)) / 2;
+        doc.addImage(it.data, "JPEG", x0 + (colW - w) / 2, yImg, w, h, undefined, "FAST");
+        if (opts.number) {
+          doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(85, 91, 122);
+          doc.text(String(p * perPage + i + 1), x0 + colW / 2, yImg + h + 12, { align: "center" });
+        }
+      }
+    }
+  }
+  doc.setProperties({ title: "Kumpulan gambar", creator: "Gambar ke Word" });
+  return doc.output("blob");
+}
+/*BUILDER_END*/
+
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const state = { items: [], busy: false, landscape: false, number: false, border: false, cols: 2, rows: 2, noteLines: 2, repeatId: true, format: "word", info: { nama: "" } };
+  let uid = 0;
+  let downloads = null;
+  let updatePending = false;
+
+  try {
+    if (window.claude && typeof window.claude.use === "function") {
+      window.claude.use("downloads").then((m) => { downloads = m || null; }).catch(() => { downloads = null; });
+    }
+  } catch (e) { downloads = null; }
+
+  const ICON = {
+    left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  };
+
+  function setStatus(msg, isErr) {
+    const el = $("#status");
+    el.textContent = msg || "";
+    el.classList.toggle("err", !!isErr);
+  }
+
+  function ctlButton(icon, label, onClick, disabled) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", label);
+    b.innerHTML = icon;
+    b.disabled = !!disabled;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function render() {
+    const pagesEl = $("#pages");
+    pagesEl.textContent = "";
+    const n = state.items.length;
+    const lay = { cols: state.cols, rows: state.rows };
+    const per = lay.cols * lay.rows;
+    const pageCount = Math.max(1, Math.ceil(n / per));
+    const contentTw = (state.landscape ? 11906 : 16838) - 1440;
+    
+    for (let p = 0; p < pageCount; p++) {
+      const sec = document.createElement("section");
+      const head = document.createElement("div");
+      head.className = "page-head";
+      const t = document.createElement("strong");
+      t.textContent = "Halaman " + (p + 1);
+      const c = document.createElement("span");
+      const inPage = Math.min(per, Math.max(0, n - p * per));
+      c.textContent = inPage + " dari " + per + " foto";
+      head.append(t, c);
+
+      const sheet = document.createElement("div");
+      sheet.className = "sheet" + (state.landscape ? " land" : "") + (lay.cols >= 3 ? " narrow" : "");
+
+      const idHere = (p === 0 || state.repeatId) ? identityLines(state.info) : [];
+      const note = document.createElement("div");
+      note.className = "note";
+      const topLines = idHere.length + state.noteLines;
+      if (topLines > 0) {
+        note.style.flexBasis = (topLines * LINE_TW) / contentTw * 100 + "%";
+        idHere.forEach((fields) => {
+          const ln = document.createElement("div");
+          ln.className = "id-line";
+          fields.forEach((f, i) => {
+            if (i > 0) ln.appendChild(document.createTextNode("   |   "));
+            const bb = document.createElement("b");
+            bb.textContent = f.label + ": ";
+            ln.append(bb, document.createTextNode(f.value));
+          });
+          note.appendChild(ln);
+        });
+        if (state.noteLines > 0) {
+          const tag = document.createElement("span");
+          tag.className = "note-tag";
+          tag.textContent = "Ruang tulis";
+          note.appendChild(tag);
+          for (let k = 0; k < Math.min(state.noteLines, 3); k++) note.appendChild(document.createElement("i"));
+        }
+      }
+      sheet.appendChild(note);
+
+      const grid = document.createElement("div");
+      grid.className = "grid";
+      grid.style.setProperty("--cols", lay.cols);
+      grid.style.setProperty("--rows", lay.rows);
+      for (let k = 0; k < per; k++) {
+        const idx = p * per + k;
+        const it = state.items[idx];
+        if (it) {
+          const slot = document.createElement("div");
+          slot.className = "slot";
+          const img = document.createElement("img");
+          img.src = it.url;
+          img.alt = "Foto " + (idx + 1);
+          slot.appendChild(img);
+          const tag = document.createElement("span");
+          tag.className = "numtag";
+          tag.textContent = String(idx + 1);
+          slot.appendChild(tag);
+          const ctl = document.createElement("div");
+          ctl.className = "ctl";
+          ctl.append(
+            ctlButton(ICON.left, "Geser foto " + (idx + 1) + " lebih awal", () => move(idx, -1), idx === 0),
+            ctlButton(ICON.x, "Hapus foto " + (idx + 1), () => remove(idx), false),
+            ctlButton(ICON.right, "Geser foto " + (idx + 1) + " lebih akhir", () => move(idx, 1), idx === n - 1)
+          );
+          slot.appendChild(ctl);
+          grid.appendChild(slot);
+        } else {
+          const e = document.createElement("button");
+          e.type = "button";
+          e.className = "slot empty";
+          e.setAttribute("aria-label", "Pilih foto");
+          e.innerHTML = ICON.plus;
+          e.addEventListener("click", openPicker);
+          grid.appendChild(e);
+        }
+      }
+      sheet.appendChild(grid);
+      sec.append(head, sheet);
+      pagesEl.appendChild(sec);
+    }
+
+    $("#addRow").hidden = n === 0;
+    $("#clearAll").hidden = n === 0;
+    $("#countTxt").textContent = n === 0 ? "Belum ada foto" : n + " foto, " + pageCount + " halaman";
+    $("#ppHint").textContent = "Susunan " + lay.cols + " × " + lay.rows + " = " + per + " foto per halaman.";
+    $("#go").disabled = n === 0 || state.busy;
+    $("#go").textContent = state.format === "pdf" ? "Simpan ke PDF" : "Simpan ke Word";
+    $("#fmtHint").textContent = state.format === "pdf"
+      ? "PDF siap dibagikan atau dicetak. Ruang tulis tetap kosong dan tidak bisa diketik."
+      : "Word bisa diedit lagi, termasuk mengetik di ruang tulis.";
+    if (updatePending) applyUpdate();
+  }
+
+  function move(i, d) {
+    const j = i + d;
+    if (j < 0 || j >= state.items.length) return;
+    const a = state.items;
+    [a[i], a[j]] = [a[j], a[i]];
+    render();
+  }
+
+  function remove(i) {
+    const [it] = state.items.splice(i, 1);
+    if (it) URL.revokeObjectURL(it.url);
+    setStatus("");
+    render();
+  }
+
+  function openPicker() {
+    if (state.busy) return;
+    $("#picker").click();
+  }
+
+  function loadViaImg(file) {
+    return new Promise((resolve, reject) => {
+      const u = URL.createObjectURL(file);
+      const im = new Image();
+      im.onload = () => { resolve({ src: im, w: im.naturalWidth, h: im.naturalHeight, done: () => URL.revokeObjectURL(u) }); };
+      im.onerror = () => { URL.revokeObjectURL(u); reject(new Error("tidak terbaca")); };
+      im.src = u;
+    });
+  }
+
+  async function decode(file) {
+    try {
+      const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+      return { src: bmp, w: bmp.width, h: bmp.height, done: () => { if (bmp.close) bmp.close(); } };
+    } catch (e) {
+      return loadViaImg(file);
+    }
+  }
+
+  async function processFile(file) {
+    const d = await decode(file);
+    try {
+      if (!d.w || !d.h) throw new Error("kosong");
+      const MAX = 1800;
+      const s = Math.min(1, MAX / Math.max(d.w, d.h));
+      const w = Math.max(1, Math.round(d.w * s));
+      const h = Math.max(1, Math.round(d.h * s));
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      const cx = cv.getContext("2d");
+      cx.fillStyle = "#fff";
+      cx.fillRect(0, 0, w, h);
+      cx.drawImage(d.src, 0, 0, w, h);
+      const blob = await new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error("gagal"))), "image/jpeg", 0.9));
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      return { id: ++uid, w, h, data: buf, url: URL.createObjectURL(blob) };
+    } finally {
+      d.done();
+    }
+  }
+
+  async function addFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    state.busy = true;
+    $("#go").disabled = true;
+    let skipped = 0;
+    for (let i = 0; i < files.length; i++) {
+      setStatus("Memproses foto " + (i + 1) + " dari " + files.length + "…");
+      try {
+        const it = await processFile(files[i]);
+        state.items.push(it);
+        render();
+      } catch (e) {
+        skipped++;
+      }
+    }
+    state.busy = false;
+    render();
+    if (skipped) {
+      setStatus(skipped + " file dilewati karena bukan gambar atau tidak bisa dibuka. Coba simpan ulang sebagai JPG atau PNG.", true);
+    } else {
+      setStatus("");
+    }
+  }
+
+  function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+  function plainDownload(blob, filename) {
+    const u = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = u; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 4000);
+  }
+
+  function stamp() {
+    const d = new Date();
+    const p = (x) => String(x).padStart(2, "0");
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "-" + p(d.getHours()) + p(d.getMinutes());
+  }
+
+  async function make() {
+    if (!state.items.length || state.busy) return;
+    const isPdf = state.format === "pdf";
+    if (isPdf ? !(window.jspdf && window.jspdf.jsPDF) : !window.docx) {
+      setStatus((isPdf ? "Pustaka PDF" : "Pustaka Word") + " belum termuat. Periksa koneksi internet lalu muat ulang halaman.", true);
+      return;
+    }
+    state.busy = true;
+    $("#go").disabled = true;
+    setStatus("Menyusun dokumen…");
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const buildOpts = {
+        landscape: state.landscape, number: state.number, border: state.border,
+        cols: state.cols, rows: state.rows, noteLines: state.noteLines,
+        info: state.info, repeatIdentity: state.repeatId,
+      };
+      let blob;
+      if (isPdf) {
+        blob = buildPdf(window.jspdf.jsPDF, state.items, buildOpts);
+      } else {
+        blob = await window.docx.Packer.toBlob(buildDoc(window.docx, state.items, buildOpts));
+      }
+      const who = (state.info.nama || "").replace(/[^A-Za-z0-9 ]+/g, "").trim().replace(/\s+/g, "_").slice(0, 30);
+      const filename = (who ? who + "-" : "Gambar-") + state.cols + "x" + state.rows + "-" + stamp() + (isPdf ? ".pdf" : ".docx");
+      if (downloads) {
+        await downloads.save({ filename: filename, data: blob });
+      } else if (isIOS() && navigator.canShare && navigator.share) {
+        const file = new File([blob], filename, { type: isPdf ? "application/pdf" : (blob.type || "application/vnd.openxmlformats-officedocument.wordprocessingml.document") });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: filename });
+          } catch (err) {
+            if (err && err.name === "AbortError") { setStatus("Penyimpanan dibatalkan."); return; }
+            plainDownload(blob, filename);
+          }
+        } else {
+          plainDownload(blob, filename);
+        }
+      } else {
+        plainDownload(blob, filename);
+      }
+      setStatus("Tersimpan: " + filename);
+    } catch (e) {
+      if (e && e.code === "declined") {
+        setStatus("Penyimpanan dibatalkan.");
+      } else if (e && (e.code === "unavailable" || e.code === "not_granted" || e.code === "capability_disabled")) {
+        setStatus("Penyimpanan file tidak tersedia di tampilan ini.", true);
+      } else if (e && e.code === "rate_limited") {
+        setStatus("Tunggu sebentar, lalu tekan Simpan ke Word lagi.", true);
+      } else {
+        setStatus("Dokumen gagal dibuat. Coba kurangi jumlah foto lalu ulangi.", true);
+      }
+    } finally {
+      state.busy = false;
+      render();
+    }
+  }
+
+  $("#picker").addEventListener("change", (e) => {
+    const files = e.target.files;
+    addFiles(files).then(() => { e.target.value = ""; });
+  });
+    $("#go").addEventListener("click", make);
+  $("#clearAll").addEventListener("click", () => {
+    state.items.forEach((it) => URL.revokeObjectURL(it.url));
+    state.items = [];
+    setStatus("");
+    render();
+  });
+  document.querySelectorAll('input[name="ori"]').forEach((r) => {
+    r.addEventListener("change", () => { state.landscape = r.value === "l" && r.checked; render(); });
+  });
+  document.querySelectorAll('input[name="fmt"]').forEach((r) => {
+    r.addEventListener("change", () => { if (r.checked) { state.format = r.value; render(); } });
+  });
+  document.querySelectorAll('input[name="col"]').forEach((r) => {
+    r.addEventListener("change", () => { if (r.checked) { state.cols = parseInt(r.value, 10); render(); } });
+  });
+  document.querySelectorAll('input[name="row"]').forEach((r) => {
+    r.addEventListener("change", () => { if (r.checked) { state.rows = parseInt(r.value, 10); render(); } });
+  });
+  document.querySelectorAll('input[name="tl"]').forEach((r) => {
+    r.addEventListener("change", () => { if (r.checked) { state.noteLines = parseInt(r.value, 10); render(); } });
+  });
+  function readInfo() {
+    state.info = { nama: $("#fNama").value };
+    render();
+  }
+  $("#fNama").addEventListener("input", readInfo);
+  $("#optRepeat").addEventListener("change", (e) => { state.repeatId = e.target.checked; render(); });
+  $("#optNum").addEventListener("change", (e) => { state.number = e.target.checked; });
+  $("#optBorder").addEventListener("change", (e) => { state.border = e.target.checked; });
+
+
+  // ---- Kamera di dalam aplikasi (pengganti scan: foto berturut-turut tanpa keluar halaman) ----
+  let camStream = null, camFacing = "environment", camShots = 0, camBusy = false;
+
+  function updateCamCount() { $("#camCount").textContent = camShots + " foto"; }
+  function stopStream() {
+    if (camStream) { camStream.getTracks().forEach((t) => t.stop()); camStream = null; }
+  }
+  async function startStream() {
+    stopStream();
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: camFacing }, width: { ideal: 3840 }, height: { ideal: 2160 } },
+      audio: false,
+    });
+    const v = $("#camVideo");
+    v.srcObject = camStream;
+    try { await v.play(); } catch (e) { /* diputar otomatis */ }
+  }
+  async function openCamera() {
+    if (state.busy) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $("#pickerCam").click();
+      return;
+    }
+    try {
+      await startStream();
+      camShots = 0;
+      updateCamCount();
+      $("#cam").hidden = false;
+      $("#camShot").focus();
+    } catch (e) {
+      stopStream();
+      setStatus("Kamera dalam aplikasi tidak bisa dibuka, memakai kamera bawaan perangkat.");
+      $("#pickerCam").click();
+    }
+  }
+  function closeCamera() {
+    stopStream();
+    $("#cam").hidden = true;
+    setStatus(camShots ? camShots + " foto dari kamera ditambahkan." : "");
+  }
+  async function shoot() {
+    const v = $("#camVideo");
+    if (camBusy || !v.videoWidth) return;
+    camBusy = true;
+    $("#camShot").disabled = true;
+    const fl = $("#camFlash");
+    fl.classList.add("on");
+    setTimeout(() => fl.classList.remove("on"), 90);
+    try {
+      const cv = document.createElement("canvas");
+      cv.width = v.videoWidth; cv.height = v.videoHeight;
+      cv.getContext("2d").drawImage(v, 0, 0);
+      const blob = await new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error("gagal"))), "image/jpeg", 0.92));
+      const it = await processFile(blob);
+      state.items.push(it);
+      camShots++;
+      updateCamCount();
+      render();
+    } catch (e) {
+      $(".cam-tip").textContent = "Foto gagal disimpan, coba lagi.";
+    }
+    camBusy = false;
+    $("#camShot").disabled = false;
+  }
+  $("#camShot").addEventListener("click", shoot);
+  $("#camDone").addEventListener("click", closeCamera);
+  $("#camFlip").addEventListener("click", async () => {
+    camFacing = camFacing === "environment" ? "user" : "environment";
+    try { await startStream(); } catch (e) {
+      camFacing = camFacing === "environment" ? "user" : "environment";
+      try { await startStream(); } catch (e2) { closeCamera(); }
+    }
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#cam").hidden) closeCamera(); });
+  $("#pickerCam").addEventListener("change", (e) => {
+    const files = e.target.files;
+    addFiles(files).then(() => { e.target.value = ""; });
+  });
+  ["#srcGallery", "#addGallery"].forEach((id) => $(id).addEventListener("click", openPicker));
+  ["#srcCamera", "#addCamera"].forEach((id) => $(id).addEventListener("click", openCamera));
+
+  // ---- PWA: service worker, pembaruan otomatis, tombol pasang ----
+  function applyUpdate() {
+    if (state.busy) return;
+    if (state.items.length === 0) {
+      location.reload();
+    } else {
+      $("#updateBar").hidden = false;
+    }
+  }
+  function onUpdateFound() {
+    updatePending = true;
+    applyUpdate();
+  }
+  $("#updateBtn").addEventListener("click", () => location.reload());
+
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) onUpdateFound(); });
+    navigator.serviceWorker.addEventListener("message", (e) => {
+      if (e.data && e.data.type === "html-updated") onUpdateFound();
+    });
+    const checkNow = () => {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.update().catch(() => {});
+        if (reg.active) reg.active.postMessage("check-update");
+      }).catch(() => {});
+    };
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch(() => {});
+      setTimeout(checkNow, 3000);
+    });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkNow(); });
+    window.addEventListener("online", checkNow);
+    setInterval(() => { if (document.visibilityState === "visible") checkNow(); }, 10 * 60 * 1000);
+  }
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!standalone) { $("#installBox").hidden = false; $("#installBtn").hidden = false; }
+  });
+  $("#installBtn").addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try { await deferredPrompt.userChoice; } catch (e) {}
+    deferredPrompt = null;
+    $("#installBox").hidden = true;
+  });
+  window.addEventListener("appinstalled", () => { $("#installBox").hidden = true; });
+  if (!standalone && isIOS()) {
+    $("#installBox").hidden = false;
+    $("#installBtn").hidden = true;
+    $("#iosHint").hidden = false;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

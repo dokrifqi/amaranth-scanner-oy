@@ -1,0 +1,38 @@
+{
+  "name": "Gambar ke Word",
+  "short_name": "Gambar ke Word",
+  "description": "Susun foto 4, 6, atau 8 per halaman menjadi dokumen Word, lengkap dengan nama pasien.",
+  "lang": "id",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1F2F7",
+  "theme_color": "#2B3A8C",
+  "categories": [
+    "productivity",
+    "medical"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

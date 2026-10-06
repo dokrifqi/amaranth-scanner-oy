@@ -1,0 +1,45 @@
+GAMBAR KE WORD (PWA)
+
+Isi folder ini siap di-hosting apa adanya, tanpa langkah build. Semua berkas ada di dalam (pustaka Word, font, ikon),
+jadi setelah dibuka sekali, aplikasi bisa dipakai tanpa internet.
+
+SYARAT PWA
+Harus dibuka lewat alamat https:// (atau localhost). Kalau file index.html dibuka langsung
+dari penyimpanan (file://), aplikasi tetap jalan tetapi tidak bisa dipasang dan tidak ada mode offline.
+
+CARA TERCEPAT MEMASANGNYA
+1. Netlify Drop: buka app.netlify.com/drop lalu seret folder ini (hasil ekstrak zip). Selesai.
+2. Atau Vercel / GitHub Pages / Cloudflare Pages: unggah folder ini sebagai situs statis,
+   tanpa langkah build.
+
+MEMASANG DI PERANGKAT
+- Android / Chrome / Edge: buka alamatnya, lalu tekan "Pasang aplikasi di perangkat ini"
+  (atau menu browser, Instal aplikasi).
+- iPhone / iPad: buka di Safari, ketuk Bagikan, lalu Tambah ke Layar Utama.
+
+FITUR UTAMA
+- Susunan foto per halaman bebas: pilih jumlah kolom (1-4) dan baris (1-5).
+- Foto bisa dari galeri atau langsung dari kamera. Kamera di dalam aplikasi bisa memotret
+  berturut-turut (cocok pengganti scan); jika kamera tidak diizinkan, aplikasi memakai kamera
+  bawaan perangkat. Izin kamera hanya berlaku pada alamat https.
+
+MENYIMPAN HASIL (WORD ATAU PDF)
+Pilih "Hasil akhir" di Pengaturan halaman: Word (.docx, bisa diedit) atau PDF (siap bagikan/cetak).
+- Android dan komputer: file langsung terunduh.
+- iPhone / iPad: muncul lembar Bagikan, pilih Simpan ke Berkas atau buka di aplikasi lain.
+- Ruang tulis hanya bisa diketik di Word. Di PDF ruang itu tetap kosong.
+
+PEMBARUAN OTOMATIS
+- Ganti index.html di hosting dengan versi baru, tanpa langkah lain. Aplikasi yang terpasang
+  memeriksa pembaruan saat dibuka, saat kembali ke layar, dan tiap 10 menit.
+- Jika belum ada foto yang dipilih, aplikasi memuat ulang sendiri ke versi baru.
+  Jika sudah ada foto, muncul pemberitahuan "Versi baru tersedia" dengan tombol Muat ulang,
+  supaya foto yang sedang disusun tidak hilang tiba-tiba. Setelah foto dikosongkan, aplikasi
+  memuat ulang sendiri.
+- Hanya jika Anda mengganti ikon, font, atau pustaka (bukan index.html), naikkan angka VERSION
+  di sw.js (mis. gambar-ke-word-v2).
+
+STRUKTUR BERKAS
+index.html, manifest.webmanifest, sw.js, dan semua ikon (icon-192.png, icon-512.png,
+maskable-512.png, apple-touch-icon.png, favicon-32.png) berada sejajar di folder utama.
+Folder fonts dan vendor berisi font, pustaka Word, dan pustaka PDF.
